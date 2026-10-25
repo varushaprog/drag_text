@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag & Drop Стикеры</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 20px;
+        }
+
+        .top-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 8px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #a0e7a4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #a0e7a4;
+        }
+
+        .workspace {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .panel {
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            width: 300px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .panel-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .clear-btn {
+            background-color: #f44336;
+            padding: 2px 8px;
+            font-size: 14px;
+            border-radius: 50%;
+        }
+        
+        .clear-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .drop-zone {
+            flex-grow: 1;
+            position: relative;
+            background-color: #fafafa;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #board.drop-zone {
+            background-color: #e8d5b5;
+        }
+
+        .sticker {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background-color: #fff9c4; 
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            padding: 10px;
+            box-sizing: border-box;
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border: 1px solid #e0e0e0;
+            user-select: none;
+        }
+
+        .sticker:nth-child(3n+1) { background-color: #fff9c4; }
+        .sticker:nth-child(3n+2) { background-color: #b3e5fc; }
+        .sticker:nth-child(3n)   { background-color: #f8bbd0; } 
+
+        .sticker-text {
+            font-size: 14px;
+            word-wrap: break-word;
+            width: 80%;
+        }
+
+        .delete-sticker {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .delete-sticker:hover {
+            color: #af2f25;
+            background: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-panel">
+        <input type="text" id="stickerInput" placeholder="Введите тек
+
+
+ст...">
+        <button id="addBtn">Добавить</button>
+    </div>
+
+    <div class="workspace">
+
+        <div class="panel">
+            <div class="panel-header">
+                <h3>Поле со стикерами</h3>
+                <button class="clear-btn" id="clearFieldBtn" title="Очистить поле">X</button>
+            </div>
+            <div class="drop-zone" id="fieldZone"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h3>Борд</h3>
+                <button class="clear-btn" id="clearBoardBtn" title="Очистить борд">X</button>
+            </div>
+            <div class="drop-zone" id="boardZone"></div>
+        </div>
+
+    </div>
+
+    <script>
+
+        const input = document.getElementById('stickerInput');
+        const addBtn = document.getElementById('addBtn');
+        const fieldZone = document.getElementById('fieldZone');
+        const boardZone = document.getElementById('boardZone');
+        const clearFieldBtn = document.getElementById('clearFieldBtn');
+        const clearBoardBtn = document.getElementById('clearBoardBtn');
+
+        let draggedItem = null;
+
+        addBtn.addEventListener('click', () => {
+            const text = input.value.trim();
+            if (!text) return;
+
+            const sticker = document.createElement('div');
+            sticker.className = 'sticker';
+            sticker.setAttribute('draggable', 'true');
+
+            const stickerText = document.createElement('div');
+            stickerText.className = 'sticker-text';
+            stickerText.textContent = text;
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-sticker';
+            deleteBtn.innerHTML = '✖';
+            deleteBtn.title = "Удалить стикер";
+
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sticker.remove();
+            });
+
+            sticker.appendChild(stickerText);
+            sticker.appendChild(deleteBtn);
+
+            fieldZone.appendChild(sticker);
+
+            setupDragAndDrop(sticker);
+
+            input.value = '';
+        });
+
+        function setupDragAndDrop(item) {
+            item.addEventListener('dragstart', () => {
+                draggedItem = item;
+                setTimeout(() => item.style.opacity = '0.5', 0); 
+            });
+
+            item.addEventListener('dragend', () => {
+                item.style.opacity = '1';
+                draggedItem = null;
+            });
+        }
+
+        function setupDropZone(zone) {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault(); 
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                
+                if (draggedItem) {
+                    zone.appendChild(draggedItem);
+
+                    const rect = zone.getBoundingClientRect();
+                    
+                    let x = e.clientX - rect.left - 60; 
+                    let y = e.clientY - rect.top - 60;
+
+                    if (x < 0) x = 0;
+                    if (y < 0) y = 0;
+                    if (x > rect.width - 120) x = rect.width - 120;
+                    if (y > rect.height - 120) y = rect.height - 120;
+
+                    draggedItem.style.left = x + 'px';
+                    draggedItem.style.top = y + 'px';
+                }
+            });
+        }
+
+        setupDropZone(fieldZone);
+        setupDropZone(boardZone);
+
+        clearFieldBtn.addEventListener('click', () => {
+            fieldZone.innerHTML = ''; 
+        });
+
+        clearBoardBtn.addEventListener('click', () => {
+            boardZone.innerHTML = '';
+        });
+
+    </script>
+</body>
+</html>
